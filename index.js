@@ -1,11 +1,18 @@
-let balance = 500.00;
-
 class Account {
 
   constructor(username) {
     this.username = username;
-    this.balance = 0;
+    this.transactions = [];
   }
+
+  get balance() {
+    return this.transactions.reduce((total, current) => total + current.value, 0);
+  }
+
+  addTransaction(transaction) {
+    this.transactions.push(transaction);
+  }
+
 }
 
 class Transaction {
@@ -16,7 +23,12 @@ class Transaction {
   }
 
   commit() {
-    this.account.balance += this.value;
+    if (this.isAllowed()) {
+      this.time = new Date();
+      this.account.addTransaction(this);
+      return true;
+    }
+    return false;
   }
 
 }
@@ -27,12 +39,20 @@ class Withdrawal extends Transaction {
     return -this.amount;
   }
 
+  isAllowed() {
+    return this.amount > 0 && this.amount < this.account.balance;
+  }
+
 }
 
 class Deposit extends Transaction {
 
   get value() {
     return this.amount;
+  }
+
+  isAllowed() {
+    return this.amount > 0;
   }
 
 }
@@ -56,5 +76,13 @@ console.log('Transaction 2:', t2);
 const t3 = new Deposit(120.00, myAccount);
 t3.commit();
 console.log('Transaction 3:', t3);
+
+const t4 = new Deposit(-120.00, myAccount);
+t4.commit();
+console.log('Transaction 4:', t4);
+
+const t5 = new Withdrawal(50, myAccount);
+t5.commit();
+console.log('Transaction 5:', t5);
 
 console.log('Balance:', myAccount.balance);
